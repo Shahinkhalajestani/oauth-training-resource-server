@@ -4,6 +4,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 
 /**
  * @author sh.khalajestanii
@@ -14,13 +15,20 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 public class WebSecurity extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeyCloakRoleConverter());
         http.
                 authorizeRequests()
-                    .antMatchers(HttpMethod.GET,"/users")
-                    .hasAnyAuthority("SCOPE_profile")
-                  .anyRequest().authenticated()
-                  .and()
+                .antMatchers(HttpMethod.GET, "/users/status/check")
+                // with authorities, we need the prefix with roles we don't
+//                    .hasAnyAuthority("SCOPE_profile")
+                .hasRole("developer")
+//                .hasAuthority("ROLE_developer")
+//                .hasAnyRole("developer","user")
+                .anyRequest().authenticated()
+                .and()
                 .oauth2ResourceServer()
-                .jwt();
+                .jwt()
+                .jwtAuthenticationConverter(jwtAuthenticationConverter);
     }
 }
